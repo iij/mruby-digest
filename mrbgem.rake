@@ -5,7 +5,7 @@ MRuby::Gem::Specification.new('mruby-digest') do |spec|
   # spec.cflags = ''
  
   # spec.mruby_cflags = ''
-  # spec.mruby_ldflags = ''
+  spec.mruby_ldflags = ['-lcrypto']
   # spec.mruby_libs = ''
   # spec.mruby_includes = ["#{spec.dir}/include"]
  
