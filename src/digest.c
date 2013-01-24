@@ -788,3 +788,8 @@ do {								\
   mrb_define_method(mrb, h, "initialize_copy", mrb_hmac_init_copy, ARGS_REQ(1));
   mrb_define_method(mrb, h, "update", mrb_hmac_update, ARGS_REQ(1));
 }
+
+void
+mrb_mruby_digest_gem_final(mrb_state *mrb)
+{
+}
