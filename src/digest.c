@@ -740,17 +740,17 @@ mrb_mruby_digest_gem_init(mrb_state *mrb)
   d = mrb_define_module(mrb, "Digest");
 
   b = mrb_define_class_under(mrb, d, "Base", mrb->object_class);
-  mrb_define_method(mrb, b, "block_length", mrb_digest_block_length, ARGS_NONE());
-  mrb_define_method(mrb, b, "digest", mrb_digest_digest, ARGS_NONE());
-  mrb_define_method(mrb, b, "digest!", mrb_digest_digest_bang, ARGS_NONE()); /* XXX: can be defined in mrblib... */
-  mrb_define_method(mrb, b, "digest_length", mrb_digest_digest_length, ARGS_NONE());
-  //mrb_define_method(mrb, b, "file", mrb_digest_file, ARGS_REQ(1));
-  mrb_define_method(mrb, b, "hexdigest", mrb_digest_hexdigest, ARGS_NONE());
-  //mrb_define_method(mrb, b, "hexdigest!", mrb_digest_hexdigest_bang, ARGS_NONE()); /* XXX: can be defined in mrblib... */
-  mrb_define_method(mrb, b, "initialize", mrb_digest_init, ARGS_NONE());
-  mrb_define_method(mrb, b, "initialize_copy", mrb_digest_init_copy, ARGS_REQ(1));
-  mrb_define_method(mrb, b, "reset", mrb_digest_reset, ARGS_NONE());
-  mrb_define_method(mrb, b, "update", mrb_digest_update, ARGS_REQ(1));
+  mrb_define_method(mrb, b, "block_length",    mrb_digest_block_length,  MRB_ARGS_NONE());
+  mrb_define_method(mrb, b, "digest",          mrb_digest_digest,        MRB_ARGS_NONE());
+  mrb_define_method(mrb, b, "digest!",         mrb_digest_digest_bang,   MRB_ARGS_NONE()); /* XXX: can be defined in mrblib... */
+  mrb_define_method(mrb, b, "digest_length",   mrb_digest_digest_length, MRB_ARGS_NONE());
+  //mrb_define_method(mrb, b, "file",            mrb_digest_file,          MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, b, "hexdigest",       mrb_digest_hexdigest,     MRB_ARGS_NONE());
+  //mrb_define_method(mrb, b, "hexdigest!",      mrb_digest_hexdigest_bang, MRB_ARGS_NONE()); /* XXX: can be defined in mrblib... */
+  mrb_define_method(mrb, b, "initialize",      mrb_digest_init,          MRB_ARGS_NONE());
+  mrb_define_method(mrb, b, "initialize_copy", mrb_digest_init_copy,     MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, b, "reset",           mrb_digest_reset,         MRB_ARGS_NONE());
+  mrb_define_method(mrb, b, "update",          mrb_digest_update,        MRB_ARGS_REQ(1));
 
 #define DEFCLASS(n)						\
 do {								\
@@ -780,13 +780,13 @@ do {								\
 
   h = mrb_define_class_under(mrb, d, "HMAC", mrb->object_class);
   MRB_SET_INSTANCE_TT(h, MRB_TT_DATA);
-  mrb_define_method(mrb, h, "block_length", mrb_hmac_block_length, ARGS_NONE());
-  mrb_define_method(mrb, h, "digest", mrb_hmac_digest, ARGS_NONE());
-  mrb_define_method(mrb, h, "digest_length", mrb_hmac_digest_length, ARGS_NONE());
-  mrb_define_method(mrb, h, "hexdigest", mrb_hmac_hexdigest, ARGS_NONE());
-  mrb_define_method(mrb, h, "initialize", mrb_hmac_init, ARGS_REQ(2));
-  mrb_define_method(mrb, h, "initialize_copy", mrb_hmac_init_copy, ARGS_REQ(1));
-  mrb_define_method(mrb, h, "update", mrb_hmac_update, ARGS_REQ(1));
+  mrb_define_method(mrb, h, "block_length",    mrb_hmac_block_length,  MRB_ARGS_NONE());
+  mrb_define_method(mrb, h, "digest",          mrb_hmac_digest,        MRB_ARGS_NONE());
+  mrb_define_method(mrb, h, "digest_length",   mrb_hmac_digest_length, MRB_ARGS_NONE());
+  mrb_define_method(mrb, h, "hexdigest",       mrb_hmac_hexdigest,     MRB_ARGS_NONE());
+  mrb_define_method(mrb, h, "initialize",      mrb_hmac_init,          MRB_ARGS_REQ(2));
+  mrb_define_method(mrb, h, "initialize_copy", mrb_hmac_init_copy,     MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, h, "update",          mrb_hmac_update,        MRB_ARGS_REQ(1));
 }
 
 void
