@@ -99,8 +99,12 @@ lib_md_free(mrb_state *mrb, void *ptr)
 {
   struct mrb_md *md = ptr;
 
-  EVP_MD_CTX_destroy(md->ctx);
-  mrb_free(mrb, md);
+  if (md != NULL) {
+    if (md->ctx != NULL) {
+      EVP_MD_CTX_destroy(md->ctx);
+    }
+    mrb_free(mrb, md);
+  }
 }
 
 static void
@@ -108,8 +112,10 @@ lib_hmac_free(mrb_state *mrb, void *ptr)
 {
   struct mrb_hmac *hmac = ptr;
 
-  HMAC_CTX_cleanup(&hmac->ctx);
-  mrb_free(mrb, hmac);
+  if (hmac != NULL) {
+    HMAC_CTX_cleanup(&hmac->ctx);
+    mrb_free(mrb, hmac);
+  }
 }
 
 static struct mrb_data_type mrb_md_type = { "MD", lib_md_free };
@@ -179,6 +185,7 @@ lib_md_init(mrb_state *mrb, struct mrb_md *md, int type)
 {
   const EVP_MD *evpmd;
 
+  md->ctx = NULL;
   evpmd = md_type_md(type);
   if (!evpmd) {
     mrb_raise(mrb, E_NOTIMP_ERROR, "not supported");
@@ -413,6 +420,7 @@ lib_md_init(mrb_state *mrb, struct mrb_md *md, int type)
     mrb_raise(mrb, E_NOTIMP_ERROR, "not supported");
   }
   md->type = type;
+  md->ctx = NULL;
   md->ctx = mrb_malloc(mrb, ctxsize);
   md_init(type, md->ctx);
 }
@@ -502,7 +510,7 @@ basecheck(mrb_state *mrb, mrb_value self, struct mrb_md **mdp)
   if (mrb_nil_p(t)) {
     mrb_raise(mrb, E_NOTIMP_ERROR, "Digest::Base is an abstract class");
   }
-  md = (struct mrb_md *)mrb_get_datatype(mrb, self, &mrb_md_type);
+  md = (struct mrb_md *)DATA_PTR(self);
   if (!md) {
     mrb_raise(mrb, E_RUNTIME_ERROR, "no md found (BUG?)");
   }
@@ -523,7 +531,7 @@ mrb_digest_digest(mrb_state *mrb, mrb_value self)
 {
   struct mrb_md *md;
 
-  md = (struct mrb_md *)mrb_get_datatype(mrb, self, &mrb_md_type);
+  md = (struct mrb_md *)DATA_PTR(self);
   if (!md) return mrb_nil_value();
   return lib_md_digest(mrb, md);
 }
@@ -533,7 +541,7 @@ mrb_digest_digest_bang(mrb_state *mrb, mrb_value self)
 {
   struct mrb_md *md;
 
-  md = (struct mrb_md *)mrb_get_datatype(mrb, self, &mrb_md_type);
+  md = (struct mrb_md *)DATA_PTR(self);
   if (!md) return mrb_nil_value();
   return lib_md_digest_bang(mrb, md);
 }
@@ -577,6 +585,13 @@ mrb_digest_init(mrb_state *mrb, mrb_value self)
   struct mrb_md *md;
   mrb_value t;
 
+  md = (struct mrb_md *)DATA_PTR(self);
+  if (md) {
+    lib_md_free(mrb, md);
+  }
+  DATA_TYPE(self) = &mrb_md_type;
+  DATA_PTR(self) = NULL;
+
   c = mrb_obj_class(mrb, self);
   if (!mrb_const_defined(mrb, mrb_obj_value(c), mrb_intern(mrb, TYPESYM))) {
     mrb_raise(mrb, E_NOTIMP_ERROR, "Digest::Base is an abstract class");
@@ -588,15 +603,9 @@ mrb_digest_init(mrb_state *mrb, mrb_value self)
   }
 #endif
 
-  md = (struct mrb_md*)mrb_get_datatype(mrb, self, &mrb_md_type);
-  if (md) {
-    lib_md_free(mrb, md);
-  }
-
   md = (struct mrb_md *)mrb_malloc(mrb, sizeof(*md));
-  lib_md_init(mrb, md, mrb_fixnum(t));
   DATA_PTR(self) = md;
-  DATA_TYPE(self) = &mrb_md_type;
+  lib_md_init(mrb, md, mrb_fixnum(t));
   return self;
 }
 
@@ -626,7 +635,7 @@ mrb_digest_reset(mrb_state *mrb, mrb_value self)
 {
   struct mrb_md *md;
 
-  md = (struct mrb_md *)mrb_get_datatype(mrb, self, &mrb_md_type);
+  md = (struct mrb_md *)DATA_PTR(self);
   if (!md) return mrb_nil_value();
   lib_md_reset(mrb, md);
   return self;
@@ -639,7 +648,7 @@ mrb_digest_update(mrb_state *mrb, mrb_value self)
   int len;
   char *str;
 
-  md = (struct mrb_md *)mrb_get_datatype(mrb, self, &mrb_md_type);
+  md = (struct mrb_md *)DATA_PTR(self);
   if (!md) return mrb_nil_value();
   mrb_get_args(mrb, "s", &str, &len);
   lib_md_update(mrb, md, (unsigned char *)str, len);
@@ -651,7 +660,7 @@ mrb_hmac_block_length(mrb_state *mrb, mrb_value self)
 {
   struct mrb_hmac *hmac;
 
-  hmac = (struct mrb_hmac *)mrb_get_datatype(mrb, self, &mrb_hmac_type);
+  hmac = (struct mrb_hmac *)DATA_PTR(self);
   if (!hmac) return mrb_nil_value();
   return mrb_fixnum_value(lib_hmac_block_length(hmac));
 }
@@ -661,7 +670,7 @@ mrb_hmac_digest(mrb_state *mrb, mrb_value self)
 {
   struct mrb_hmac *hmac;
 
-  hmac = (struct mrb_hmac *)mrb_get_datatype(mrb, self, &mrb_hmac_type);
+  hmac = (struct mrb_hmac *)DATA_PTR(self);
   if (!hmac) return mrb_nil_value();
   return lib_hmac_digest(mrb, hmac);
 }
@@ -671,7 +680,7 @@ mrb_hmac_digest_length(mrb_state *mrb, mrb_value self)
 {
   struct mrb_hmac *hmac;
 
-  hmac = (struct mrb_hmac *)mrb_get_datatype(mrb, self, &mrb_hmac_type);
+  hmac = (struct mrb_hmac *)DATA_PTR(self);
   if (!hmac) return mrb_nil_value();
   return mrb_fixnum_value(lib_hmac_digest_length(hmac));
 }
@@ -690,21 +699,22 @@ mrb_hmac_init(mrb_state *mrb, mrb_value self)
   int keylen;
   char *key;
 
+  hmac = (struct mrb_hmac *)DATA_PTR(self);
+  if (hmac) {
+    lib_hmac_free(mrb, hmac);
+  }
+  DATA_TYPE(self) = &mrb_hmac_type;
+  DATA_PTR(self) = NULL;
+
   mrb_get_args(mrb, "so", &key, &keylen, &digest);
   t = mrb_const_get(mrb, digest, mrb_intern(mrb, TYPESYM));
   if (mrb_nil_p(t)) {
     mrb_raise(mrb, E_RUNTIME_ERROR, "not a digester");
   }
 
-  hmac = (struct mrb_hmac *)mrb_get_datatype(mrb, self, &mrb_hmac_type);
-  if (hmac) {
-    lib_hmac_free(mrb, hmac);
-  }
-
   hmac = (struct mrb_hmac *)mrb_malloc(mrb, sizeof(*hmac));
-  lib_hmac_init(mrb, hmac, mrb_fixnum(t), (unsigned char *)key, keylen);
   DATA_PTR(self) = hmac;
-  DATA_TYPE(self) = &mrb_hmac_type;
+  lib_hmac_init(mrb, hmac, mrb_fixnum(t), (unsigned char *)key, keylen);
   return self;
 }
 
@@ -722,7 +732,7 @@ mrb_hmac_update(mrb_state *mrb, mrb_value self)
   int len;
   char *str;
 
-  hmac = (struct mrb_hmac *)mrb_get_datatype(mrb, self, &mrb_hmac_type);
+  hmac = (struct mrb_hmac *)DATA_PTR(self);
   if (!hmac) return mrb_nil_value();
   mrb_get_args(mrb, "s", &str, &len);
   lib_hmac_update(hmac, (unsigned char *)str, len);
