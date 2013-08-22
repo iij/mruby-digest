@@ -1,8 +1,18 @@
 mruby-digest
 =========
 
-## install by mrbgems
+## Features
+
+Message Digest and HMAC classes are available.  They are compatible with CRuby's ones.
+
+- Digest::MD5, Digest::RMD160, Digest::SHA1, Digest::SHA256, Digest::SHA384 and
+  Digest::SHA512
+  - Note: some of them are not available if libcrypto.a does not support them on your system.
+- Digest::HMAC
+
+## Install
  - add conf.gem line to `build_config.rb`
+
 ```ruby
 MRuby::Build.new do |conf|
 
@@ -12,11 +22,15 @@ MRuby::Build.new do |conf|
 end
 ```
 
-## example
+## Usage
 ```ruby
 Digest::MD5.digest('ruby')
 Digest::MD5.hexdigest('ruby')
 ```
+
+## Requirement
+- OpenSSL library (libcrypto.a) on Unix systems
+- Common Crypto library on MacOSX
 
 ## License
 
