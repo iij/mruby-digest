@@ -506,7 +506,7 @@ basecheck(mrb_state *mrb, mrb_value self, struct mrb_md **mdp)
   mrb_value t;
 
   c = mrb_obj_class(mrb, self);
-  t = mrb_const_get(mrb, mrb_obj_value(c), mrb_intern(mrb, TYPESYM));
+  t = mrb_const_get(mrb, mrb_obj_value(c), mrb_intern_lit(mrb, TYPESYM));
   if (mrb_nil_p(t)) {
     mrb_raise(mrb, E_NOTIMP_ERROR, "Digest::Base is an abstract class");
   }
@@ -593,10 +593,10 @@ mrb_digest_init(mrb_state *mrb, mrb_value self)
   DATA_PTR(self) = NULL;
 
   c = mrb_obj_class(mrb, self);
-  if (!mrb_const_defined(mrb, mrb_obj_value(c), mrb_intern(mrb, TYPESYM))) {
+  if (!mrb_const_defined(mrb, mrb_obj_value(c), mrb_intern_lit(mrb, TYPESYM))) {
     mrb_raise(mrb, E_NOTIMP_ERROR, "Digest::Base is an abstract class");
   }
-  t = mrb_const_get(mrb, mrb_obj_value(c), mrb_intern(mrb, TYPESYM));
+  t = mrb_const_get(mrb, mrb_obj_value(c), mrb_intern_lit(mrb, TYPESYM));
 #if 0
   if (lib_md_supported(t)) {
     mrb_raise(mrb, E_NOTIMP_ERROR, "unknown algorithm");
@@ -707,7 +707,7 @@ mrb_hmac_init(mrb_state *mrb, mrb_value self)
   DATA_PTR(self) = NULL;
 
   mrb_get_args(mrb, "so", &key, &keylen, &digest);
-  t = mrb_const_get(mrb, digest, mrb_intern(mrb, TYPESYM));
+  t = mrb_const_get(mrb, digest, mrb_intern_lit(mrb, TYPESYM));
   if (mrb_nil_p(t)) {
     mrb_raise(mrb, E_RUNTIME_ERROR, "not a digester");
   }
