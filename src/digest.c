@@ -75,7 +75,11 @@ static void lib_hmac_update(struct mrb_hmac *, unsigned char *, int);
  */
 
 #define HAVE_MD5
+
+#ifndef OPENSSL_NO_RIPEMD
 #define HAVE_RMD160
+#endif
+
 #define HAVE_SHA1
 #ifdef SHA256_DIGEST_LENGTH
 #define HAVE_SHA256
@@ -167,7 +171,9 @@ md_type_md(int type)
 {
   switch (type) {
   case MD_TYPE_MD5:	return EVP_md5();
+#ifdef HAVE_RMD160:
   case MD_TYPE_RMD160:	return EVP_ripemd160();
+#endif
   case MD_TYPE_SHA1:	return EVP_sha1();
 #ifdef HAVE_SHA256
   case MD_TYPE_SHA256:	return EVP_sha256();
