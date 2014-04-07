@@ -171,7 +171,7 @@ md_type_md(int type)
 {
   switch (type) {
   case MD_TYPE_MD5:	return EVP_md5();
-#ifdef HAVE_RMD160:
+#ifdef HAVE_RMD160
   case MD_TYPE_RMD160:	return EVP_ripemd160();
 #endif
   case MD_TYPE_SHA1:	return EVP_sha1();
