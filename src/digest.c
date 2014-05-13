@@ -30,7 +30,9 @@
 #include "mruby/string.h"
 #include "mruby/variable.h"
 
+#ifndef _WIN32
 #include <err.h>
+#endif
 
 #define TYPESYM "__type__"
 
