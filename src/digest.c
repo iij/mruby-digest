@@ -649,7 +649,7 @@ static mrb_value
 mrb_digest_update(mrb_state *mrb, mrb_value self)
 {
   struct mrb_md *md;
-  int len;
+  mrb_int len;
   char *str;
 
   md = (struct mrb_md *)DATA_PTR(self);
@@ -700,7 +700,7 @@ mrb_hmac_init(mrb_state *mrb, mrb_value self)
 {
   struct mrb_hmac *hmac;
   mrb_value digest, t;
-  int keylen;
+  mrb_int keylen;
   char *key;
 
   hmac = (struct mrb_hmac *)DATA_PTR(self);
@@ -733,7 +733,7 @@ static mrb_value
 mrb_hmac_update(mrb_state *mrb, mrb_value self)
 {
   struct mrb_hmac *hmac;
-  int len;
+  mrb_int len;
   char *str;
 
   hmac = (struct mrb_hmac *)DATA_PTR(self);
