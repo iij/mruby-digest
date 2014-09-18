@@ -22,6 +22,7 @@
 #else
 #error "define USE_DIGEST_OPENSSL or USE_DIGEST_OSX_COMMONCRYPTO"
 #endif
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include "mruby/array.h"
@@ -57,14 +58,14 @@ static void lib_md_free(mrb_state *, void *);
 static void lib_md_init(mrb_state *, struct mrb_md *, int);
 static void lib_md_init_copy(mrb_state *, struct mrb_md *, struct mrb_md *);
 static void lib_md_reset(mrb_state *, struct mrb_md *);
-static void lib_md_update(mrb_state *, struct mrb_md *, unsigned char *, int);
+static void lib_md_update(mrb_state *, struct mrb_md *, unsigned char *, mrb_int);
 
 static mrb_value lib_hmac_digest(mrb_state *, const struct mrb_hmac *);
 static int lib_hmac_block_length(const struct mrb_hmac *);
 static int lib_hmac_digest_length(const struct mrb_hmac *);
 static void lib_hmac_free(mrb_state *, void *);
-static void lib_hmac_init(mrb_state *, struct mrb_hmac *, int, const unsigned char *, int);
-static void lib_hmac_update(struct mrb_hmac *, unsigned char *, int);
+static void lib_hmac_init(mrb_state *, struct mrb_hmac *, int, const unsigned char *, mrb_int);
+static void lib_hmac_update(struct mrb_hmac *, unsigned char *, mrb_int);
 
 
 #if defined(USE_DIGEST_OPENSSL)
@@ -213,8 +214,13 @@ lib_md_reset(mrb_state *mrb, struct mrb_md *md)
 }
 
 static void
-lib_md_update(mrb_state *mrb, struct mrb_md *md, unsigned char *str, int len)
+lib_md_update(mrb_state *mrb, struct mrb_md *md, unsigned char *str, mrb_int len)
 {
+#if MRB_INT_MAX > SIZE_MAX
+  if (len > SIZE_MAX) {
+    mrb_raise(mrb, E_ARGUMENT_ERROR, "too long string (not supported yet)");
+  }
+#endif
   EVP_DigestUpdate(md->ctx, str, len);
 }
 
@@ -243,8 +249,13 @@ lib_hmac_digest_length(const struct mrb_hmac *hmac)
 }
 
 static void
-lib_hmac_init(mrb_state *mrb, struct mrb_hmac *hmac, int type, const unsigned char *key, int keylen)
+lib_hmac_init(mrb_state *mrb, struct mrb_hmac *hmac, int type, const unsigned char *key, mrb_int keylen)
 {
+#if MRB_INT_MAX > INT_MAX
+  if (keylen > INT_MAX) {
+      mrb_raise(mrb, E_ARGUMENT_ERROR, "too long key");
+  }
+#endif
   hmac->md = md_type_md(type);
   HMAC_CTX_init(&hmac->ctx);
   HMAC_Init_ex(&hmac->ctx, key, keylen, hmac->md, NULL);
@@ -253,6 +264,11 @@ lib_hmac_init(mrb_state *mrb, struct mrb_hmac *hmac, int type, const unsigned ch
 static void
 lib_hmac_update(struct mrb_hmac *hmac, unsigned char *data, int len)
 {
+#if MRB_INT_MAX > INT_MAX
+  if (len > INT_MAX) {
+      mrb_raise(mrb, E_ARGUMENT_ERROR, "too long string (not supported yet)");
+  }
+#endif
   HMAC_Update(&hmac->ctx, data, len);
 }
 
@@ -442,8 +458,13 @@ lib_md_reset(mrb_state *mrb, struct mrb_md *md)
 }
 
 static void
-lib_md_update(mrb_state *mrb, struct mrb_md *md, unsigned char *data, int len)
+lib_md_update(mrb_state *mrb, struct mrb_md *md, unsigned char *data, mrb_int len)
 {
+  if (sizeof(len) > sizeof(CC_LONG)) {
+    if (len != (CC_LONG)len) {
+      mrb_raise(mrb, E_ARGUMENT_ERROR, "too long string (not supported yet)");
+    }
+  }
   switch (md->type) {
   case MD_TYPE_MD5:	CC_MD5_Update(md->ctx, data, len);	break;
   case MD_TYPE_SHA1:	CC_SHA1_Update(md->ctx, data, len);	break;
@@ -478,10 +499,15 @@ lib_hmac_digest_length(const struct mrb_hmac *hmac)
 }
 
 static void
-lib_hmac_init(mrb_state *mrb, struct mrb_hmac *hmac, int type, const unsigned char *key, int keylen)
+lib_hmac_init(mrb_state *mrb, struct mrb_hmac *hmac, int type, const unsigned char *key, mrb_int keylen)
 {
   CCHmacAlgorithm algorithm;
 
+#if MRB_INT_MAX > SIZE_MAX
+  if (len > SIZE_MAX) {
+    mrb_raise(mrb, E_ARGUMENT_ERROR, "too long key");
+  }
+#endif
   switch (type) {
   case MD_TYPE_MD5:    algorithm = kCCHmacAlgMD5;    break;
   case MD_TYPE_SHA1:   algorithm = kCCHmacAlgSHA1;   break;
@@ -495,8 +521,13 @@ lib_hmac_init(mrb_state *mrb, struct mrb_hmac *hmac, int type, const unsigned ch
 }
 
 static void
-lib_hmac_update(struct mrb_hmac *hmac, unsigned char *data, int len)
+lib_hmac_update(struct mrb_hmac *hmac, unsigned char *data, mrb_int len)
 {
+#if MRB_INT_MAX > SIZE_MAX
+  if (len > SIZE_MAX) {
+    mrb_raise(mrb, E_ARGUMENT_ERROR, "too long string");
+  }
+#endif
   CCHmacUpdate(&hmac->ctx, data, len);
 }
 
@@ -649,7 +680,7 @@ static mrb_value
 mrb_digest_update(mrb_state *mrb, mrb_value self)
 {
   struct mrb_md *md;
-  int len;
+  mrb_int len;
   char *str;
 
   md = (struct mrb_md *)DATA_PTR(self);
@@ -700,7 +731,7 @@ mrb_hmac_init(mrb_state *mrb, mrb_value self)
 {
   struct mrb_hmac *hmac;
   mrb_value digest, t;
-  int keylen;
+  mrb_int keylen;
   char *key;
 
   hmac = (struct mrb_hmac *)DATA_PTR(self);
@@ -733,7 +764,7 @@ static mrb_value
 mrb_hmac_update(mrb_state *mrb, mrb_value self)
 {
   struct mrb_hmac *hmac;
-  int len;
+  mrb_int len;
   char *str;
 
   hmac = (struct mrb_hmac *)DATA_PTR(self);
