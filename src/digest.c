@@ -521,7 +521,7 @@ lib_hmac_init(mrb_state *mrb, struct mrb_hmac *hmac, int type, const unsigned ch
 }
 
 static void
-lib_hmac_update(struct mrb_hmac *hmac, unsigned char *data, mrb_int len)
+lib_hmac_update(mrb_state *mrb, struct mrb_hmac *hmac, unsigned char *data, mrb_int len)
 {
 #if MRB_INT_MAX > SIZE_MAX
   if (len > SIZE_MAX) {
