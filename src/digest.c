@@ -514,7 +514,10 @@ lib_hmac_init(mrb_state *mrb, struct mrb_hmac *hmac, int type, const unsigned ch
   case MD_TYPE_SHA256: algorithm = kCCHmacAlgSHA256; break;
   case MD_TYPE_SHA384: algorithm = kCCHmacAlgSHA384; break;
   case MD_TYPE_SHA512: algorithm = kCCHmacAlgSHA512; break;
-  default:					     break;
+  default:
+    mrb_raisef(mrb, E_RUNTIME_ERROR, "mruby-digest: internal error: unexpected HMAC type: %S", mrb_fixnum_value(type));
+    algorithm = 0;
+    break;
   }
   hmac->type = type;
   CCHmacInit(&hmac->ctx, algorithm, key, keylen);
