@@ -33,8 +33,7 @@ Digest::MD5.hexdigest('ruby')
 
 ## License
 
-Copyright (c) 2012 Internet Initiative Japan Inc.
-Copyright (c) 2015 Kazuho Oku
+Copyright (c) 2012-2015 Internet Initiative Japan Inc., Kazuho Oku
 
 Permission is hereby granted, free of charge, to any person obtaining a 
 copy of this software and associated documentation files (the "Software"), 
