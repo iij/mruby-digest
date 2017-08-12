@@ -93,7 +93,7 @@ struct mrb_md {
 };
 
 struct mrb_hmac {
-  HMAC_CTX ctx;
+  HMAC_CTX *ctx;
   const EVP_MD *md;
 };
 
@@ -116,7 +116,7 @@ lib_hmac_free(mrb_state *mrb, void *ptr)
   struct mrb_hmac *hmac = ptr;
 
   if (hmac != NULL) {
-    HMAC_CTX_cleanup(&hmac->ctx);
+    HMAC_CTX_free(hmac->ctx);
     mrb_free(mrb, hmac);
   }
 }
@@ -139,12 +139,14 @@ lib_md_block_length(const struct mrb_md *md)
 static mrb_value
 lib_md_digest(mrb_state *mrb, const struct mrb_md *md)
 {
-  EVP_MD_CTX ctx;
+  EVP_MD_CTX *ctx;
   unsigned int mdlen;
   unsigned char mdstr[EVP_MAX_MD_SIZE];
 
-  EVP_MD_CTX_copy(&ctx, md->ctx);
-  EVP_DigestFinal(&ctx, mdstr, &mdlen);
+  ctx = EVP_MD_CTX_new();
+  EVP_MD_CTX_copy(ctx, md->ctx);
+  EVP_DigestFinal(ctx, mdstr, &mdlen);
+  EVP_MD_CTX_free(ctx);
   return mrb_str_new(mrb, (char *)mdstr, mdlen);
 }
 
@@ -227,12 +229,12 @@ lib_md_update(mrb_state *mrb, struct mrb_md *md, unsigned char *str, mrb_int len
 static mrb_value
 lib_hmac_digest(mrb_state *mrb, const struct mrb_hmac *hmac)
 {
-  HMAC_CTX ctx;
+  HMAC_CTX *ctx;
   unsigned int mdlen;
   unsigned char mdstr[EVP_MAX_MD_SIZE];
 
   memcpy(&ctx, &hmac->ctx, sizeof(ctx));
-  HMAC_Final(&ctx, mdstr, &mdlen);
+  HMAC_Final(ctx, mdstr, &mdlen);
   return mrb_str_new(mrb, (char *)mdstr, mdlen);
 }
 
@@ -257,8 +259,8 @@ lib_hmac_init(mrb_state *mrb, struct mrb_hmac *hmac, int type, const unsigned ch
   }
 #endif
   hmac->md = md_type_md(type);
-  HMAC_CTX_init(&hmac->ctx);
-  HMAC_Init_ex(&hmac->ctx, key, keylen, hmac->md, NULL);
+  hmac->ctx = HMAC_CTX_new();
+  HMAC_Init_ex(hmac->ctx, key, keylen, hmac->md, NULL);
 }
 
 static void
@@ -269,7 +271,7 @@ lib_hmac_update(mrb_state *mrb, struct mrb_hmac *hmac, unsigned char *data, mrb_
       mrb_raise(mrb, E_ARGUMENT_ERROR, "too long string (not supported yet)");
   }
 #endif
-  HMAC_Update(&hmac->ctx, data, len);
+  HMAC_Update(hmac->ctx, data, len);
 }
 
 #elif defined(USE_DIGEST_OSX_COMMONCRYPTO)
