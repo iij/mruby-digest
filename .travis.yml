@@ -1,2 +1,20 @@
+dist: trusty
+sudo: required
+install:
+  - sudo apt-get -qq update
+  - sudo apt-get -qq install build-essential rake bison git curl zlib1g-dev
+env:
+  - OPENSSL_VERSION=1.0.2
+  - OPENSSL_VERSION=1.1.0
+before_script:
+  - curl -sSfL "https://www.openssl.org/source/openssl-${OPENSSL_VERSION}-latest.tar.gz" | tar xz
+  - pushd openssl-${OPENSSL_VERSION}*
+  - ./config --prefix=/opt shared zlib -fPIC > /dev/null
+  - make > /dev/null
+  - sudo make install_sw > /dev/null
+  - popd
+  - sudo sh -c 'echo /opt/lib > /etc/ld.so.conf.d/openssl.conf'
+  - sudo ldconfig
+  - openssl version
 script:
   - "ruby run_test.rb all test"
