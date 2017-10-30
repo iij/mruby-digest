@@ -93,7 +93,11 @@ struct mrb_md {
 };
 
 struct mrb_hmac {
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined LIBRESSL_VERSION_NUMBER)
+  HMAC_CTX *ctx;
+#else
   HMAC_CTX ctx;
+#endif
   const EVP_MD *md;
 };
 
@@ -116,7 +120,11 @@ lib_hmac_free(mrb_state *mrb, void *ptr)
   struct mrb_hmac *hmac = ptr;
 
   if (hmac != NULL) {
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined LIBRESSL_VERSION_NUMBER)
+    HMAC_CTX_free(hmac->ctx);
+#else
     HMAC_CTX_cleanup(&hmac->ctx);
+#endif
     mrb_free(mrb, hmac);
   }
 }
@@ -139,12 +147,23 @@ lib_md_block_length(const struct mrb_md *md)
 static mrb_value
 lib_md_digest(mrb_state *mrb, const struct mrb_md *md)
 {
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined LIBRESSL_VERSION_NUMBER)
+  EVP_MD_CTX *ctx;
+#else
   EVP_MD_CTX ctx;
+#endif
   unsigned int mdlen;
   unsigned char mdstr[EVP_MAX_MD_SIZE];
 
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined LIBRESSL_VERSION_NUMBER)
+  ctx = EVP_MD_CTX_new();
+  EVP_MD_CTX_copy(ctx, md->ctx);
+  EVP_DigestFinal(ctx, mdstr, &mdlen);
+  EVP_MD_CTX_free(ctx);
+#else
   EVP_MD_CTX_copy(&ctx, md->ctx);
   EVP_DigestFinal(&ctx, mdstr, &mdlen);
+#endif
   return mrb_str_new(mrb, (char *)mdstr, mdlen);
 }
 
@@ -227,12 +246,20 @@ lib_md_update(mrb_state *mrb, struct mrb_md *md, unsigned char *str, mrb_int len
 static mrb_value
 lib_hmac_digest(mrb_state *mrb, const struct mrb_hmac *hmac)
 {
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined LIBRESSL_VERSION_NUMBER)
+  HMAC_CTX *ctx;
+#else
   HMAC_CTX ctx;
+#endif
   unsigned int mdlen;
   unsigned char mdstr[EVP_MAX_MD_SIZE];
 
   memcpy(&ctx, &hmac->ctx, sizeof(ctx));
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined LIBRESSL_VERSION_NUMBER)
+  HMAC_Final(ctx, mdstr, &mdlen);
+#else
   HMAC_Final(&ctx, mdstr, &mdlen);
+#endif
   return mrb_str_new(mrb, (char *)mdstr, mdlen);
 }
 
@@ -257,8 +284,13 @@ lib_hmac_init(mrb_state *mrb, struct mrb_hmac *hmac, int type, const unsigned ch
   }
 #endif
   hmac->md = md_type_md(type);
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined LIBRESSL_VERSION_NUMBER)
+  hmac->ctx = HMAC_CTX_new();
+  HMAC_Init_ex(hmac->ctx, key, keylen, hmac->md, NULL);
+#else
   HMAC_CTX_init(&hmac->ctx);
   HMAC_Init_ex(&hmac->ctx, key, keylen, hmac->md, NULL);
+#endif
 }
 
 static void
@@ -269,7 +301,11 @@ lib_hmac_update(mrb_state *mrb, struct mrb_hmac *hmac, unsigned char *data, mrb_
       mrb_raise(mrb, E_ARGUMENT_ERROR, "too long string (not supported yet)");
   }
 #endif
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined LIBRESSL_VERSION_NUMBER)
+  HMAC_Update(hmac->ctx, data, len);
+#else
   HMAC_Update(&hmac->ctx, data, len);
+#endif
 }
 
 #elif defined(USE_DIGEST_OSX_COMMONCRYPTO)

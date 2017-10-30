@@ -1,2 +1,23 @@
+dist: trusty
+sudo: required
+install:
+  - sudo apt-get -qq update
+  - sudo apt-get -qq install build-essential rake bison git curl zlib1g-dev
+env:
+  global:
+    - CFLAGS=-I/opt/include LDFLAGS=-L/opt/lib
+  matrix:
+    - SSL_VERSION=openssl-1.0.2 DOWNLOAD_URL="https://www.openssl.org/source/${SSL_VERSION}-latest.tar.gz"
+    - SSL_VERSION=openssl-1.1.0 DOWNLOAD_URL="https://www.openssl.org/source/${SSL_VERSION}-latest.tar.gz"
+    - SSL_VERSION=libressl-2.5.5 DOWNLOAD_URL="https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/${SSL_VERSION}.tar.gz"
+    - SSL_VERSION=libressl-2.6.2 DOWNLOAD_URL="https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/${SSL_VERSION}.tar.gz"
+before_script:
+  - curl -sSfL $DOWNLOAD_URL | tar xz
+  - pushd ${SSL_VERSION}*
+  - ./config --prefix=/opt shared zlib -fPIC > /dev/null
+  - make > /dev/null
+  - sudo make install_sw > /dev/null
+  - popd
+  - sudo ldconfig /opt/lib
 script:
   - "ruby run_test.rb all test"
